@@ -1,9 +1,0 @@
-<svg width="900" height="1100" viewBox="0 0 900 1100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="900" height="1100" rx="54" fill="#E8FFFA"/>
-  <rect x="80" y="80" width="740" height="940" rx="48" fill="url(#g)"/>
-  <circle cx="450" cy="405" r="178" fill="#D7FFF7"/>
-  <circle cx="450" cy="350" r="106" fill="#0F172A"/>
-  <path d="M244 811c42-138 139-210 206-210s164 72 206 210c12 39-17 79-58 79H302c-41 0-70-40-58-79Z" fill="#0F172A"/>
-  <text x="450" y="984" text-anchor="middle" font-family="Inter,Arial" font-size="34" fill="#0F172A" font-weight="800">Upload your photo in Admin</text>
-  <defs><linearGradient id="g" x1="137" y1="127" x2="829" y2="955" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#99F6E4"/></linearGradient></defs>
-</svg>
