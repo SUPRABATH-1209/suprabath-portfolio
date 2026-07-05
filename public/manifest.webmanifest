@@ -1,0 +1,9 @@
+{
+  "name": "Suprabath Behera Portfolio",
+  "short_name": "Suprabath",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#14b8a6",
+  "icons": [{ "src": "/favicon.svg", "sizes": "64x64", "type": "image/svg+xml" }]
+}
