@@ -21,6 +21,7 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
+  const isPdfLink = (href: string) => href.toLowerCase().endsWith('.pdf');
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
@@ -48,12 +49,18 @@ export default function Header() {
     );
   }, [content, query]);
 
-  const goTo = (href: string) => {
-    setSearchOpen(false);
-    setMobileOpen(false);
-    setQuery('');
-    navigate(href);
-  };
+ const goTo = (href: string) => {
+  setSearchOpen(false);
+  setMobileOpen(false);
+  setQuery('');
+
+  if (isPdfLink(href)) {
+    window.open(href, '_blank', 'noopener,noreferrer');
+    return;
+  }
+
+  navigate(href);
+};
 
   return (
     <>
@@ -70,11 +77,17 @@ export default function Header() {
           </Link>
 
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Main navigation">
-            {navItems.map((item) => (
-              <NavLink key={item.href} to={item.href} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                {item.label}
-              </NavLink>
-            ))}
+            {navItems.map((item) =>
+  isPdfLink(item.href) ? (
+    <a key={item.href} href={item.href} target="_blank" rel="noreferrer" className="nav-link">
+      {item.label}
+    </a>
+  ) : (
+    <NavLink key={item.href} to={item.href} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+      {item.label}
+    </NavLink>
+  )
+)}
           </nav>
 
           <div className="flex items-center gap-2">
@@ -112,11 +125,24 @@ export default function Header() {
                 <button className="header-icon" onClick={() => setMobileOpen(false)} aria-label="Close menu"><X size={20} /></button>
               </div>
               <nav className="mt-8 grid gap-2">
-                {navItems.map((item) => (
-                  <NavLink key={item.href} to={item.href} onClick={() => setMobileOpen(false)} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                    {item.label}
-                  </NavLink>
-                ))}
+              {navItems.map((item) =>
+  isPdfLink(item.href) ? (
+    <a
+      key={item.href}
+      href={item.href}
+      target="_blank"
+      rel="noreferrer"
+      onClick={() => setMobileOpen(false)}
+      className="nav-link"
+    >
+      {item.label}
+    </a>
+  ) : (
+    <NavLink key={item.href} to={item.href} onClick={() => setMobileOpen(false)} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+      {item.label}
+    </NavLink>
+  )
+)}
               </nav>
               <div className="mt-8 grid gap-3">
                 <a href={`mailto:${content.profile.email}`} className="btn-primary inline-flex w-full items-center justify-center gap-2"><Mail size={18} /> Hire Me</a>
