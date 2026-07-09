@@ -17,15 +17,12 @@ const navItems = [
 
 export default function Header() {
   const { content } = usePortfolioStore();
-  const { profile } = content;
-
   const [mobileOpen, setMobileOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem('portfolio-theme') === 'dark'
   );
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -70,10 +67,13 @@ export default function Header() {
       href: '/certificates'
     }));
 
-    return [...pages, ...skills, ...projects, ...certificates].filter((item) => {
-      const searchValue = `${item.title} ${item.type}`.toLowerCase();
-      return searchValue.includes(query.toLowerCase());
-    });
+    const cleanQuery = query.toLowerCase().trim();
+
+    return [...pages, ...skills, ...projects, ...certificates].filter(
+      (item) =>
+        item.title.toLowerCase().includes(cleanQuery) ||
+        item.type.toLowerCase().includes(cleanQuery)
+    );
   }, [content, query]);
 
   const goTo = (href: string) => {
@@ -85,45 +85,45 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-white/80 backdrop-blur-2xl dark:bg-slate-950/80">
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[80] focus:rounded-xl focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-black focus:text-slate-950"
-        >
-          Skip to main content
-        </a>
+      <header className="site-header sticky top-0 z-50 border-b backdrop-blur-xl">
+        <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center justify-between gap-2 px-3 sm:h-20 sm:px-5 lg:px-8">
+          <Link
+            to="/"
+            className="mobile-brand flex min-w-0 flex-1 items-center gap-2 overflow-hidden sm:gap-3"
+            aria-label="Go to home"
+          >
+            <div className="header-avatar h-10 w-10 shrink-0 sm:h-12 sm:w-12">
+              <img
+                src={content.profile.photoData || '/profile-placeholder.svg'}
+                alt={`${content.profile.name} profile`}
+              />
+            </div>
 
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-5 lg:px-8">
-          <Link to="/" className="flex min-w-0 items-center gap-3">
-            <img
-              src={profile.photoData || '/profile-placeholder.svg'}
-              alt={`${profile.name} profile`}
-              className="h-11 w-11 shrink-0 rounded-2xl object-cover ring-2 ring-white/70 dark:ring-white/10"
-            />
-
-            <div className="min-w-0">
-              <p className="truncate text-sm font-black text-slate-950 dark:text-white sm:text-base">
-                {profile.name}
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <p className="mobile-brand-name truncate text-[0.88rem] font-black leading-tight text-[var(--text)] sm:text-base">
+                {content.profile.name}
               </p>
-              <p className="truncate text-xs font-bold text-slate-500 dark:text-slate-400">
+              <p className="mobile-brand-role truncate text-[0.68rem] font-extrabold leading-tight text-[var(--muted)] sm:text-xs">
                 Java Backend Developer
               </p>
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-2 lg:flex" aria-label="Primary navigation">
+          <nav className="hidden items-center gap-1 lg:flex">
             {navItems.map((item) => (
               <NavLink
                 key={item.href}
                 to={item.href}
-                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                className={({ isActive }) =>
+                  `nav-link ${isActive ? 'active' : ''}`
+                }
               >
                 {item.label}
               </NavLink>
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="mobile-header-actions flex shrink-0 items-center gap-1.5 sm:gap-2">
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
@@ -134,26 +134,6 @@ export default function Header() {
               <span>Search</span>
               <kbd>⌘K</kbd>
             </button>
-
-            <a
-              href={profile.github}
-              target="_blank"
-              rel="noreferrer"
-              className="header-icon"
-              aria-label="GitHub profile"
-            >
-              <Github size={18} />
-            </a>
-
-            <a
-              href={profile.linkedin}
-              target="_blank"
-              rel="noreferrer"
-              className="header-icon"
-              aria-label="LinkedIn profile"
-            >
-              <Linkedin size={18} />
-            </a>
 
             <button
               type="button"
@@ -179,34 +159,35 @@ export default function Header() {
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
-            className="fixed inset-0 z-[70] bg-slate-950/60 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-[80] bg-black/60 p-3 backdrop-blur-sm lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setMobileOpen(false)}
           >
             <motion.aside
-              className="ml-auto flex h-full w-[86%] max-w-sm flex-col gap-5 overflow-y-auto bg-white p-5 shadow-2xl dark:bg-slate-950"
-              initial={{ x: 320 }}
-              animate={{ x: 0 }}
-              exit={{ x: 320 }}
+              className="ml-auto flex h-full w-full max-w-sm flex-col overflow-hidden rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface-solid)] shadow-2xl"
+              initial={{ x: 60, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 60, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 280, damping: 28 }}
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center justify-between border-b border-[var(--line)] p-4">
                 <div className="flex min-w-0 items-center gap-3">
-                  <img
-                    src={profile.photoData || '/profile-placeholder.svg'}
-                    alt={`${profile.name} profile`}
-                    className="h-12 w-12 rounded-2xl object-cover"
-                  />
+                  <div className="header-avatar h-11 w-11">
+                    <img
+                      src={content.profile.photoData || '/profile-placeholder.svg'}
+                      alt={`${content.profile.name} profile`}
+                    />
+                  </div>
 
                   <div className="min-w-0">
-                    <p className="truncate font-black text-slate-950 dark:text-white">
-                      {profile.name}
+                    <p className="truncate font-black text-[var(--text)]">
+                      {content.profile.name}
                     </p>
-                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                      Portfolio menu
+                    <p className="truncate text-xs font-bold text-[var(--muted)]">
+                      Java Backend Developer
                     </p>
                   </div>
                 </div>
@@ -217,48 +198,64 @@ export default function Header() {
                   className="header-icon"
                   aria-label="Close menu"
                 >
-                  <X size={20} />
+                  <X size={19} />
                 </button>
               </div>
 
-              <nav className="grid gap-2" aria-label="Mobile navigation">
-                {navItems.map((item) => (
-                  <NavLink
-                    key={item.href}
-                    to={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                  >
-                    {item.label}
-                  </NavLink>
-                ))}
-              </nav>
+              <div className="flex-1 overflow-y-auto p-4">
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(true)}
+                  className="btn-secondary mb-4 flex w-full items-center justify-center gap-2 py-3"
+                >
+                  <Search size={18} />
+                  Search portfolio
+                </button>
 
-              <div className="grid gap-3 pt-2">
-                <a href={`mailto:${profile.email}`} className="btn-primary justify-center">
-                  <Mail size={18} />
-                  Hire Me
-                </a>
+                <nav className="grid gap-2">
+                  {navItems.map((item) => (
+                    <NavLink
+                      key={item.href}
+                      to={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={({ isActive }) =>
+                        `nav-link flex items-center justify-between ${
+                          isActive ? 'active' : ''
+                        }`
+                      }
+                    >
+                      {item.label}
+                    </NavLink>
+                  ))}
+                </nav>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="mt-5 grid grid-cols-3 gap-2">
                   <a
-                    href={profile.github}
+                    href={content.profile.github}
                     target="_blank"
                     rel="noreferrer"
-                    className="btn-secondary justify-center"
+                    className="btn-secondary flex items-center justify-center py-3"
+                    aria-label="GitHub"
                   >
                     <Github size={18} />
-                    GitHub
                   </a>
 
                   <a
-                    href={profile.linkedin}
+                    href={content.profile.linkedin}
                     target="_blank"
                     rel="noreferrer"
-                    className="btn-secondary justify-center"
+                    className="btn-secondary flex items-center justify-center py-3"
+                    aria-label="LinkedIn"
                   >
                     <Linkedin size={18} />
-                    LinkedIn
+                  </a>
+
+                  <a
+                    href={`mailto:${content.profile.email}`}
+                    className="btn-secondary flex items-center justify-center py-3"
+                    aria-label="Email"
+                  >
+                    <Mail size={18} />
                   </a>
                 </div>
               </div>
@@ -270,22 +267,21 @@ export default function Header() {
       <AnimatePresence>
         {searchOpen && (
           <motion.div
-            className="fixed inset-0 z-[90] bg-slate-950/70 p-4 backdrop-blur-md"
+            className="fixed inset-0 z-[90] grid place-items-start bg-black/55 p-3 pt-20 backdrop-blur-sm sm:p-6 sm:pt-24"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSearchOpen(false)}
           >
             <motion.div
-              className="mx-auto mt-20 max-w-2xl rounded-[2rem] border border-white/10 bg-white p-4 shadow-2xl dark:bg-slate-950"
-              initial={{ y: 20, opacity: 0, scale: 0.98 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 20, opacity: 0, scale: 0.98 }}
+              className="mx-auto w-full max-w-2xl rounded-[1.5rem] border border-[var(--line)] bg-[var(--surface-solid)] p-4 shadow-2xl"
+              initial={{ y: -18, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -18, opacity: 0 }}
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="flex items-center gap-3 border-b border-slate-200 px-2 pb-4 dark:border-white/10">
-                <Search className="text-slate-400" size={22} />
-
+              <div className="flex items-center gap-3 rounded-2xl border border-[var(--line)] px-4 py-3">
+                <Search size={18} className="text-[var(--muted)]" />
                 <input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
@@ -293,34 +289,32 @@ export default function Header() {
                   className="w-full bg-transparent text-base outline-none sm:text-lg"
                   autoFocus
                 />
-
                 <button
                   type="button"
                   onClick={() => setSearchOpen(false)}
-                  className="header-icon"
                   aria-label="Close search"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
 
-              <div className="max-h-[55vh] overflow-y-auto py-3">
+              <div className="mt-3 max-h-[22rem] overflow-y-auto">
                 {searchItems.length === 0 ? (
-                  <p className="rounded-2xl p-4 text-center font-bold text-slate-500">
+                  <div className="rounded-2xl p-4 text-sm font-bold text-[var(--muted)]">
                     No results found.
-                  </p>
+                  </div>
                 ) : (
                   searchItems.slice(0, 10).map((item) => (
                     <button
                       key={`${item.type}-${item.title}`}
                       type="button"
                       onClick={() => goTo(item.href)}
-                      className="flex w-full items-center justify-between rounded-2xl p-4 text-left transition hover:bg-[var(--soft)]"
+                      className="flex w-full items-center justify-between rounded-2xl p-4 text-left hover:bg-[var(--soft)]"
                     >
-                      <span className="font-black text-slate-950 dark:text-white">
+                      <span className="font-black text-[var(--text)]">
                         {item.title}
                       </span>
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-500 dark:bg-slate-900 dark:text-slate-300">
+                      <span className="text-xs font-black uppercase tracking-[0.16em] text-[var(--muted)]">
                         {item.type}
                       </span>
                     </button>

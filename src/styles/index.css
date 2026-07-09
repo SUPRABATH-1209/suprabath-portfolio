@@ -308,3 +308,54 @@ select:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
+@media (max-width: 640px) {
+  .mobile-header-actions {
+    gap: 0.35rem !important;
+  }
+
+  .mobile-brand {
+    max-width: calc(100vw - 112px);
+  }
+
+  .mobile-brand-name {
+    max-width: 100%;
+    font-size: 0.88rem;
+    letter-spacing: -0.02em;
+  }
+
+  .mobile-brand-role {
+    max-width: 100%;
+    font-size: 0.65rem;
+  }
+
+  .header-icon {
+    width: 2.45rem;
+    height: 2.45rem;
+    min-width: 2.45rem;
+  }
+
+  .header-avatar {
+    width: 2.45rem;
+    height: 2.45rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .mobile-brand {
+    max-width: calc(100vw - 104px);
+  }
+
+  .mobile-brand-name {
+    font-size: 0.8rem;
+  }
+
+  .mobile-brand-role {
+    font-size: 0.6rem;
+  }
+
+  .header-icon {
+    width: 2.3rem;
+    height: 2.3rem;
+    min-width: 2.3rem;
+  }
+}
