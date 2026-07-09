@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Github, Linkedin, Mail, MapPin, MessageSquare, Send, User } from 'lucide-react';
 
 import { usePortfolioStore } from '../hooks/usePortfolioStore';
+import { trackPortfolioEvent } from '../lib/portfolioAnalytics';
 
 export default function Contact() {
   const { content } = usePortfolioStore();
@@ -20,8 +21,25 @@ export default function Contact() {
     }));
   };
 
+  const trackContactClick = (
+    action: 'email' | 'github' | 'linkedin',
+    targetUrl: string
+  ) => {
+    trackPortfolioEvent('contact_click', {
+      action,
+      targetUrl,
+      source: 'contact_page'
+    });
+  };
+
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
+
+    trackPortfolioEvent('contact_form_submit', {
+      name: form.name,
+      email: form.email,
+      source: 'contact_page'
+    });
 
     const subject = encodeURIComponent(
       `Portfolio Contact from ${form.name || 'Recruiter'}`
@@ -56,12 +74,17 @@ export default function Contact() {
           <div className="mt-5 grid gap-4">
             <a
               href={`mailto:${profile.email}`}
+              onClick={() =>
+                trackContactClick('email', `mailto:${profile.email}`)
+              }
               className="rounded-3xl border border-slate-200 p-5 transition hover:-translate-y-1 hover:border-[var(--accent)] dark:border-white/10"
             >
               <Mail className="mb-3 text-[var(--accent-strong)]" size={22} />
+
               <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
                 Email
               </p>
+
               <p className="mt-1 break-all font-bold text-slate-700 dark:text-slate-300">
                 {profile.email}
               </p>
@@ -69,9 +92,11 @@ export default function Contact() {
 
             <div className="rounded-3xl border border-slate-200 p-5 dark:border-white/10">
               <MapPin className="mb-3 text-[var(--accent-strong)]" size={22} />
+
               <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
                 Location
               </p>
+
               <p className="mt-1 font-bold text-slate-700 dark:text-slate-300">
                 {profile.location}
               </p>
@@ -82,6 +107,7 @@ export default function Contact() {
                 href={profile.github}
                 target="_blank"
                 rel="noreferrer"
+                onClick={() => trackContactClick('github', profile.github)}
                 className="btn-secondary justify-center"
               >
                 <Github size={18} />
@@ -92,13 +118,20 @@ export default function Contact() {
                 href={profile.linkedin}
                 target="_blank"
                 rel="noreferrer"
+                onClick={() => trackContactClick('linkedin', profile.linkedin)}
                 className="btn-secondary justify-center"
               >
                 <Linkedin size={18} />
                 LinkedIn
               </a>
 
-              <a href={`mailto:${profile.email}`} className="btn-secondary justify-center">
+              <a
+                href={`mailto:${profile.email}`}
+                onClick={() =>
+                  trackContactClick('email', `mailto:${profile.email}`)
+                }
+                className="btn-secondary justify-center"
+              >
                 <Mail size={18} />
                 Email
               </a>
@@ -114,6 +147,7 @@ export default function Contact() {
 
             <div>
               <p className="section-eyebrow">Message</p>
+
               <h2 className="text-2xl font-black text-slate-950 dark:text-white">
                 Send a message
               </h2>

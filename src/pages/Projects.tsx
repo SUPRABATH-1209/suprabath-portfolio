@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react';
 import { ExternalLink, Github, PlayCircle, Search, X } from 'lucide-react';
+
 import SectionHeader from '../components/SectionHeader';
 import EmptyState from '../components/EmptyState';
 import Reveal from '../components/Reveal';
 import ProjectMedia from '../components/ProjectMedia';
 import { usePortfolioStore } from '../hooks/usePortfolioStore';
+import { trackPortfolioEvent } from '../lib/portfolioAnalytics';
+import type { Project } from '../types/portfolio';
 
 export default function Projects() {
   const { content } = usePortfolioStore();
@@ -16,13 +19,23 @@ export default function Projects() {
   const pageSize = 4;
 
   const categories = useMemo(
-    () => ['All', ...Array.from(new Set(content.projects.map((project) => project.category).filter(Boolean)))],
+    () => [
+      'All',
+      ...Array.from(
+        new Set(content.projects.map((project) => project.category).filter(Boolean))
+      )
+    ],
     [content.projects]
   );
 
   const filteredProjects = content.projects.filter((project) => {
-    const techStackText = Array.isArray(project.techStack) ? project.techStack.join(' ') : '';
-    const searchableText = `${project.title} ${project.summary} ${project.category || ''} ${techStackText}`.toLowerCase();
+    const techStackText = Array.isArray(project.techStack)
+      ? project.techStack.join(' ')
+      : '';
+
+    const searchableText = `${project.title} ${project.summary} ${
+      project.category || ''
+    } ${techStackText}`.toLowerCase();
 
     const matchesQuery = searchableText.includes(query.toLowerCase());
     const matchesCategory = category === 'All' || project.category === category;
@@ -38,96 +51,117 @@ export default function Projects() {
     setPage(1);
   };
 
+  const trackProject = (
+    project: Project,
+    action: 'github' | 'demo',
+    targetUrl?: string
+  ) => {
+    trackPortfolioEvent('project_click', {
+      action,
+      projectId: project.id,
+      projectTitle: project.title,
+      category: project.category || 'Project',
+      targetUrl: targetUrl || ''
+    });
+  };
+
   return (
-    <div className="py-10">
+    <div className="space-y-6 sm:space-y-8">
       <SectionHeader
         eyebrow="Projects"
-        title="Projects"
-        description="Real project screenshots show first. If a video is added, the screenshot stays visible for 3 seconds and then the video starts automatically muted."
+        title="Practical Backend Projects"
+        description="Selected projects that show backend development, API design, database work and practical implementation."
       />
 
       {content.projects.length === 0 ? (
         <EmptyState
           title="No projects added yet"
-          message="Add your real backend projects only. Recruiters should see GitHub links, screenshots, tech stack and practical summaries."
+          message="Projects will appear here after they are added to the portfolio."
+          action={false}
         />
       ) : (
         <>
-          <div className="mb-8 grid gap-4 lg:grid-cols-[1fr_auto]">
-            <label className="relative block">
-              <Search
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                size={20}
-              />
+          <section className="clean-card p-4 sm:p-6">
+            <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+              <label className="relative block">
+                <Search
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={18}
+                />
 
-              <input
-                value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                  setPage(1);
-                }}
-                placeholder="Search projects by title, stack or summary"
-                className="form-input pl-12"
-              />
-
-              {query && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuery('');
+                <input
+                  value={query}
+                  onChange={(event) => {
+                    setQuery(event.target.value);
                     setPage(1);
                   }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
-                  aria-label="Clear search"
-                >
-                  <X size={18} />
-                </button>
-              )}
-            </label>
+                  placeholder="Search projects by title, stack or summary"
+                  className="form-input pl-12"
+                />
 
-            <div className="flex flex-wrap gap-3">
-              {categories.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => {
-                    setCategory(item);
-                    setPage(1);
-                  }}
-                  className={item === category ? 'btn-primary py-3' : 'btn-secondary py-3'}
-                >
-                  {item}
-                </button>
-              ))}
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery('');
+                      setPage(1);
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+                    aria-label="Clear search"
+                  >
+                    <X size={17} />
+                  </button>
+                )}
+              </label>
+
+              <div className="flex flex-wrap gap-2">
+                {categories.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => {
+                      setCategory(item);
+                      setPage(1);
+                    }}
+                    className={
+                      item === category
+                        ? 'btn-primary py-3'
+                        : 'btn-secondary py-3'
+                    }
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          </section>
 
           {filteredProjects.length === 0 ? (
-            <div className="clean-card p-8 text-center">
-              <p className="text-2xl font-black text-slate-950 dark:text-white">No matching projects found</p>
-              <p className="mt-2 text-slate-500 dark:text-slate-400">
-                Try another keyword or clear the selected filter.
-              </p>
-
-              <button type="button" onClick={clearFilters} className="btn-primary mt-6">
-                Clear filters
-              </button>
-            </div>
+            <EmptyState
+              title="No projects matched your search"
+              message="Try a different keyword or reset the selected filter."
+              action={false}
+            />
           ) : (
             <>
-              <div className="grid gap-7 lg:grid-cols-2">
+              <section className="grid gap-6 lg:grid-cols-2">
                 {visibleProjects.map((project, index) => (
-                  <Reveal key={project.id} delay={Math.min(index * 0.04, 0.2)}>
-                    <article className="project-card clean-card h-full overflow-hidden transition hover:-translate-y-1 hover:shadow-soft">
-                      <ProjectMedia project={project} className="h-72 rounded-none sm:h-80" />
+                  <Reveal key={project.id} delay={index * 0.04}>
+                    <article className="clean-card h-full overflow-hidden">
+                      <ProjectMedia project={project} className="h-[260px]" />
 
-                      <div className="p-5 sm:p-6">
-                        <div className="mb-4 flex flex-wrap gap-2">
-                          <span className="badge">{project.category || 'Project'}</span>
+                      <div className="p-5">
+                        <div className="mb-4 flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600 dark:bg-slate-900 dark:text-slate-300">
+                            {project.category || 'Project'}
+                          </span>
 
-                          {(project.videoUrl || project.videoData || project.videoBlobKey) && (
-                            <span className="badge inline-flex items-center gap-1">
-                              <PlayCircle size={15} /> Video
+                          {(project.videoUrl ||
+                            project.videoData ||
+                            project.videoBlobKey) && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300">
+                              <PlayCircle size={14} />
+                              Video
                             </span>
                           )}
                         </div>
@@ -136,32 +170,37 @@ export default function Projects() {
                           {project.title}
                         </h2>
 
-                        <p className="mt-3 leading-7 text-slate-600 dark:text-slate-300">
+                        <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
                           {project.summary}
                         </p>
 
-                        {Array.isArray(project.techStack) && project.techStack.length > 0 && (
-                          <div className="mt-5 flex flex-wrap gap-2">
-                            {project.techStack.map((tech) => (
-                              <span
-                                key={tech}
-                                className="rounded-full bg-slate-100 px-3 py-1 text-sm font-bold dark:bg-slate-900"
-                              >
-                                {tech}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                        {Array.isArray(project.techStack) &&
+                          project.techStack.length > 0 && (
+                            <div className="mt-5 flex flex-wrap gap-2">
+                              {project.techStack.map((tech) => (
+                                <span
+                                  key={tech}
+                                  className="rounded-full border border-slate-200 px-3 py-1 text-xs font-black text-slate-500 dark:border-white/10 dark:text-slate-400"
+                                >
+                                  {tech}
+                                </span>
+                              ))}
+                            </div>
+                          )}
 
-                        <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap">
+                        <div className="mt-6 grid gap-3 sm:grid-cols-2">
                           {project.githubUrl && (
                             <a
                               href={project.githubUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="btn-secondary inline-flex items-center justify-center gap-2 py-3"
+                              onClick={() =>
+                                trackProject(project, 'github', project.githubUrl)
+                              }
+                              className="btn-secondary justify-center"
                             >
-                              <Github size={18} /> GitHub
+                              <Github size={18} />
+                              GitHub
                             </a>
                           )}
 
@@ -170,9 +209,13 @@ export default function Projects() {
                               href={project.demoUrl}
                               target="_blank"
                               rel="noreferrer"
-                              className="btn-primary inline-flex items-center justify-center gap-2 py-3"
+                              onClick={() =>
+                                trackProject(project, 'demo', project.demoUrl)
+                              }
+                              className="btn-primary justify-center"
                             >
-                              <ExternalLink size={18} /> Live Demo
+                              <ExternalLink size={18} />
+                              Live Demo
                             </a>
                           )}
                         </div>
@@ -180,16 +223,16 @@ export default function Projects() {
                     </article>
                   </Reveal>
                 ))}
-              </div>
+              </section>
 
               {visibleProjects.length < filteredProjects.length && (
-                <div className="mt-10 flex justify-center px-4">
+                <div className="flex justify-center">
                   <button
                     type="button"
                     onClick={() => setPage((value) => value + 1)}
                     className="btn-primary w-full rounded-full px-6 py-4 text-center sm:w-auto"
                   >
-                    Load more projects
+                    View more projects
                   </button>
                 </div>
               )}

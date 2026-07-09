@@ -7,7 +7,7 @@ A clean, recruiter-focused React portfolio for Java Backend / Spring Boot develo
 - Premium UI cleanup pass.
 - Removed experimental pet/fingerprint/extra background effects.
 - Removed fake local analytics numbers.
-- Admin still uses password: `suprabath1209`.
+
 - Home page shows top 3 certificates and top 2 projects only.
 - Certificates show full image first, details below.
 - Projects show screenshot first; if video is uploaded, it starts automatically after 3 seconds.
