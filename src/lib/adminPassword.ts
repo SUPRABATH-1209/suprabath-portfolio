@@ -5,10 +5,6 @@ import { db } from './firebase';
 const ADMIN_SETTINGS_COLLECTION = 'portfolioAdminSettings';
 const ADMIN_SECURITY_DOC = 'security';
 
-// Used only for first setup if Firebase password document does not exist yet.
-// After you change password from Admin, Firebase password will be used.
-const FIRST_SETUP_PASSWORD = 'suprabath1209';
-
 async function hashPassword(value: string) {
   const encoded = new TextEncoder().encode(value);
   const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
@@ -26,27 +22,17 @@ async function getStoredPasswordHash() {
   const securityRef = getSecurityDocRef();
   const snapshot = await getDoc(securityRef);
 
-  if (snapshot.exists()) {
-    const data = snapshot.data();
-
-    if (typeof data.passwordHash === 'string' && data.passwordHash.length > 0) {
-      return data.passwordHash;
-    }
+  if (!snapshot.exists()) {
+    throw new Error('Admin password is not configured in Firebase.');
   }
 
-  const firstSetupHash = await hashPassword(FIRST_SETUP_PASSWORD);
+  const data = snapshot.data();
 
-  await setDoc(
-    securityRef,
-    {
-      passwordHash: firstSetupHash,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    },
-    { merge: true }
-  );
+  if (typeof data.passwordHash !== 'string' || data.passwordHash.length === 0) {
+    throw new Error('Admin password hash is missing in Firebase.');
+  }
 
-  return firstSetupHash;
+  return data.passwordHash;
 }
 
 export async function verifyAdminPassword(password: string) {
