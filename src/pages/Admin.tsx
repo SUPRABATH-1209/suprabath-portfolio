@@ -35,31 +35,31 @@ const tabs = [
   },
   {
     id: 'activity',
-    label: 'Recruiter Activity',
+    label: 'Activity',
     icon: Activity,
     component: RecruiterActivity
   },
   {
     id: 'resume',
-    label: 'Resume Clicks',
+    label: 'Resume',
     icon: FileText,
     component: ResumeClicks
   },
   {
     id: 'projects',
-    label: 'Project Clicks',
+    label: 'Projects',
     icon: FolderKanban,
     component: ProjectClicks
   },
   {
     id: 'certificates',
-    label: 'Certificate Clicks',
+    label: 'Certificates',
     icon: Award,
     component: CertificateClicks
   },
   {
     id: 'checklist',
-    label: 'Website Checklist',
+    label: 'Checklist',
     icon: CheckSquare,
     component: WebsiteChecklist
   }
@@ -71,8 +71,8 @@ export default function Admin() {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState(tabs[0].id);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isMarkingAdminDevice, setIsMarkingAdminDevice] = useState(false);
-  const [adminDeviceExcluded, setAdminDeviceExcluded] = useState(
+  const [isOpening, setIsOpening] = useState(false);
+  const [privateSessionReady, setPrivateSessionReady] = useState(
     isCurrentVisitorAdminExcluded()
   );
 
@@ -88,21 +88,18 @@ export default function Admin() {
       return;
     }
 
-    setIsMarkingAdminDevice(true);
+    setIsOpening(true);
 
     try {
       await markCurrentVisitorAsAdmin();
-      setAdminDeviceExcluded(true);
-      setIsUnlocked(true);
-      setPassword('');
-      setError('');
+      setPrivateSessionReady(true);
     } catch {
-      setAdminDeviceExcluded(isCurrentVisitorAdminExcluded());
+      setPrivateSessionReady(isCurrentVisitorAdminExcluded());
+    } finally {
       setIsUnlocked(true);
       setPassword('');
       setError('');
-    } finally {
-      setIsMarkingAdminDevice(false);
+      setIsOpening(false);
     }
   };
 
@@ -127,12 +124,11 @@ export default function Admin() {
 
           <h1 className="mt-2 flex items-center gap-3 text-3xl font-black text-slate-950 dark:text-white">
             <Shield className="text-[var(--accent-strong)]" />
-            Analytics Dashboard
+            Private Dashboard
           </h1>
 
           <p className="mt-3 max-w-3xl text-slate-600 dark:text-slate-300">
-            This admin panel is only for analytics, recruiter activity and website
-            readiness checks. Public visitors see only the normal portfolio.
+            Authorized access only.
           </p>
         </div>
 
@@ -141,7 +137,7 @@ export default function Admin() {
             htmlFor="admin-password"
             className="text-sm font-black uppercase tracking-[0.18em] text-slate-400"
           >
-            Admin password
+            Password
           </label>
 
           <input
@@ -149,7 +145,7 @@ export default function Admin() {
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            placeholder="Enter admin password"
+            placeholder="Enter password"
             className="form-input mt-3"
             autoComplete="current-password"
           />
@@ -162,16 +158,11 @@ export default function Admin() {
 
           <button
             type="submit"
-            disabled={isMarkingAdminDevice}
+            disabled={isOpening}
             className="btn-primary mt-5 w-full justify-center disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isMarkingAdminDevice ? 'Opening Dashboard...' : 'Open Dashboard'}
+            {isOpening ? 'Opening...' : 'Continue'}
           </button>
-
-          <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300">
-            After successful admin login, this browser/device is automatically
-            excluded from recruiter analytics.
-          </p>
         </form>
       </section>
     );
@@ -186,34 +177,31 @@ export default function Admin() {
 
             <h1 className="mt-2 flex items-center gap-3 text-3xl font-black text-slate-950 dark:text-white">
               <Shield className="text-[var(--accent-strong)]" />
-              Analytics Dashboard
+              Dashboard
             </h1>
 
             <p className="mt-3 max-w-3xl text-slate-600 dark:text-slate-300">
-              Focused on clean analytics, recruiter activity, click tracking and
-              website readiness.
+              Portfolio dashboard.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-3">
               <span className="inline-flex rounded-full bg-emerald-100 px-4 py-2 text-sm font-black text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300">
-                Firebase analytics connected
+                Dashboard ready
               </span>
 
               <span
                 className={
-                  adminDeviceExcluded
+                  privateSessionReady
                     ? 'inline-flex rounded-full bg-sky-100 px-4 py-2 text-sm font-black text-sky-700 dark:bg-sky-400/10 dark:text-sky-300'
                     : 'inline-flex rounded-full bg-amber-100 px-4 py-2 text-sm font-black text-amber-700 dark:bg-amber-400/10 dark:text-amber-300'
                 }
               >
-                {adminDeviceExcluded
-                  ? 'This admin device is excluded'
-                  : 'This admin device is not excluded yet'}
+                {privateSessionReady ? 'Private session active' : 'Private session pending'}
               </span>
             </div>
           </div>
 
-          <button onClick={handleLogout} className="btn-secondary">
+          <button type="button" onClick={handleLogout} className="btn-secondary">
             <LogOut size={18} />
             Logout
           </button>
