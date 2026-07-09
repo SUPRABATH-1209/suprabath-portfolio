@@ -11,6 +11,7 @@ import {
 import {
   getRecentPortfolioEvents,
   getRecentPortfolioVisitors,
+  isCurrentVisitorAdminExcluded,
   type PortfolioEvent,
   type PortfolioVisitor
 } from '../../lib/portfolioAnalytics';
@@ -51,6 +52,8 @@ export default function RecruiterActivity() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const adminDeviceExcluded = isCurrentVisitorAdminExcluded();
+
   useEffect(() => {
     let isMounted = true;
 
@@ -61,9 +64,11 @@ export default function RecruiterActivity() {
         setVisitors(visitorData);
       })
       .catch((err) => {
-        console.warn('Failed to load recruiter activity:', err);
+        console.warn('Failed to load clean recruiter activity:', err);
         if (!isMounted) return;
-        setError('Unable to load activity. Check Firebase rules and env variables.');
+        setError(
+          'Unable to load activity. Check Firestore rules, collections and env variables.'
+        );
       })
       .finally(() => {
         if (!isMounted) return;
@@ -81,12 +86,25 @@ export default function RecruiterActivity() {
         <p className="section-eyebrow">Recruiter Activity</p>
 
         <h2 className="mt-2 text-3xl font-black text-slate-950 dark:text-white">
-          Anonymous Visitor Timeline
+          Clean Anonymous Visitor Timeline
         </h2>
 
         <p className="mt-3 max-w-3xl text-slate-600 dark:text-slate-300">
-          This shows anonymous visitors, repeat visit count, device type and recent
-          actions like resume opens, project clicks and certificate clicks.
+          This list hides admin/test devices and shows only real anonymous visitor
+          actions like page views, resume opens, project clicks and certificate
+          clicks.
+        </p>
+
+        <p
+          className={
+            adminDeviceExcluded
+              ? 'mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300'
+              : 'mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700 dark:bg-amber-400/10 dark:text-amber-300'
+          }
+        >
+          {adminDeviceExcluded
+            ? 'This admin device is excluded. Your laptop/mobile activity from this browser will not appear here.'
+            : 'This device is not excluded yet. Login to Admin successfully on each device you personally use.'}
         </p>
 
         {error && (
@@ -100,7 +118,7 @@ export default function RecruiterActivity() {
         <div className="clean-card p-8 text-center">
           <Timer className="mx-auto text-[var(--accent-strong)]" size={34} />
           <p className="mt-4 font-black text-slate-600 dark:text-slate-300">
-            Loading visitor activity...
+            Loading clean visitor activity...
           </p>
         </div>
       ) : (
@@ -108,19 +126,21 @@ export default function RecruiterActivity() {
           <div className="clean-card p-6">
             <div className="mb-5 flex items-center gap-3">
               <UserRound className="text-[var(--accent-strong)]" size={24} />
+
               <div>
                 <h3 className="text-xl font-black text-slate-950 dark:text-white">
-                  Recent Visitors
+                  Recent Real Visitors
                 </h3>
+
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Example: Visitor 1 — 2 visits, Visitor 2 — 1 visit.
+                  Admin/test visitor IDs are hidden from this list.
                 </p>
               </div>
             </div>
 
             {visitors.length === 0 ? (
               <p className="rounded-2xl bg-slate-50 p-5 text-center font-bold text-slate-500 dark:bg-slate-900 dark:text-slate-400">
-                No visitors yet. Open your public portfolio pages to generate data.
+                No real visitors yet. Admin/test visitors may already be hidden.
               </p>
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
@@ -166,20 +186,21 @@ export default function RecruiterActivity() {
           <div className="clean-card p-6">
             <div className="mb-5 flex items-center gap-3">
               <Activity className="text-[var(--accent-strong)]" size={24} />
+
               <div>
                 <h3 className="text-xl font-black text-slate-950 dark:text-white">
-                  Recent Actions
+                  Recent Real Actions
                 </h3>
+
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Latest anonymous actions from Firestore.
+                  Latest non-admin actions from Firestore.
                 </p>
               </div>
             </div>
 
             {events.length === 0 ? (
               <p className="rounded-2xl bg-slate-50 p-5 text-center font-bold text-slate-500 dark:bg-slate-900 dark:text-slate-400">
-                No activity yet. Visit pages like Home, Resume, Projects and
-                Certificates to test tracking.
+                No real activity yet. Admin/test events may already be hidden.
               </p>
             ) : (
               <div className="grid gap-4 md:grid-cols-2">
