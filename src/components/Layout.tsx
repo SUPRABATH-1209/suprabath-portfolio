@@ -1,14 +1,16 @@
-import { AnimatePresence, motion } from 'framer-motion';
-import { useLocation } from 'react-router-dom';
-import type { ReactNode } from 'react';
+﻿import { AnimatePresence, motion } from 'framer-motion';
+import { Outlet, useLocation } from 'react-router-dom';
+
 import Header from './Header';
 import Footer from './Footer';
 
-export default function Layout({ children }: { children: ReactNode }) {
+export default function Layout() {
   const location = useLocation();
+
   return (
     <div>
       <Header />
+
       <main id="main-content" className="mx-auto max-w-7xl px-4 py-7 sm:px-5 lg:px-8">
         <AnimatePresence mode="wait">
           <motion.div
@@ -19,10 +21,11 @@ export default function Layout({ children }: { children: ReactNode }) {
             transition={{ duration: 0.22, ease: 'easeOut' }}
             className="page-transition"
           >
-            {children}
+            <Outlet />
           </motion.div>
         </AnimatePresence>
       </main>
+
       <Footer />
     </div>
   );
