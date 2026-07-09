@@ -1,35 +1,122 @@
-import { BarChart3, Clock, MousePointerClick, Smartphone, Users } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  BarChart3,
+  Clock,
+  Download,
+  FileText,
+  MousePointerClick,
+  Smartphone,
+  Users
+} from 'lucide-react';
+
+import {
+  getPortfolioSummary,
+  type PortfolioSummary
+} from '../../lib/portfolioAnalytics';
+
+function getNumber(value: number | undefined) {
+  return typeof value === 'number' ? value : 0;
+}
+
+function formatFirebaseDate(value: any) {
+  if (!value) return 'No activity yet';
+
+  try {
+    if (typeof value.toDate === 'function') {
+      return value.toDate().toLocaleString();
+    }
+
+    if (value instanceof Date) {
+      return value.toLocaleString();
+    }
+
+    return String(value);
+  } catch {
+    return 'No activity yet';
+  }
+}
 
 export default function AnalyticsOverview() {
+  const [summary, setSummary] = useState<PortfolioSummary>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getPortfolioSummary()
+      .then((data) => {
+        if (!isMounted) return;
+        setSummary(data || {});
+      })
+      .catch((err) => {
+        console.warn('Failed to load Firebase analytics summary:', err);
+        if (!isMounted) return;
+        setError('Unable to load analytics. Check Firebase rules and env variables.');
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const totalClicks = useMemo(() => {
+    return (
+      getNumber(summary.resumeOpens) +
+      getNumber(summary.resumeDownloads) +
+      getNumber(summary.githubClicks) +
+      getNumber(summary.linkedinClicks) +
+      getNumber(summary.emailClicks) +
+      getNumber(summary.certificateClicks) +
+      getNumber(summary.projectClicks) +
+      getNumber(summary.contactClicks) +
+      getNumber(summary.contactFormSubmits)
+    );
+  }, [summary]);
+
   const cards = [
     {
-      title: 'Total Visits',
-      value: 'Not connected',
-      note: 'Will show real visitor count after Firebase setup.',
+      title: 'Unique Visitors',
+      value: getNumber(summary.totalUniqueVisitors),
+      note: 'Anonymous browser-based visitors. Same browser is counted as same visitor.',
       icon: Users
     },
     {
-      title: 'Page Views',
-      value: 'Not connected',
-      note: 'Home, Resume, Projects, Certificates and Contact views.',
+      title: 'Total Visits',
+      value: getNumber(summary.totalVisits),
+      note: 'Repeat visits are counted again when a new browser session starts.',
       icon: BarChart3
     },
     {
-      title: 'Clicks',
-      value: 'Not connected',
-      note: 'Resume, GitHub, LinkedIn, project and certificate clicks.',
+      title: 'Page Views',
+      value: getNumber(summary.pageViews),
+      note: 'Public portfolio page views only. Admin page views are ignored.',
+      icon: FileText
+    },
+    {
+      title: 'Total Clicks',
+      value: totalClicks,
+      note: 'Resume, project, certificate, GitHub, LinkedIn, email and contact clicks.',
       icon: MousePointerClick
     },
     {
-      title: 'Time Spent',
-      value: 'Not connected',
-      note: 'Average session time and last active time.',
-      icon: Clock
+      title: 'Resume Actions',
+      value: getNumber(summary.resumeOpens) + getNumber(summary.resumeDownloads),
+      note: `Open: ${getNumber(summary.resumeOpens)} / Download: ${getNumber(
+        summary.resumeDownloads
+      )}`,
+      icon: Download
     },
     {
-      title: 'Device Type',
-      value: 'Not connected',
-      note: 'Mobile and desktop visitor split.',
+      title: 'Device Events',
+      value: `M ${getNumber(summary.mobileEvents)} / D ${getNumber(
+        summary.desktopEvents
+      )}`,
+      note: 'Mobile and desktop activity split.',
       icon: Smartphone
     }
   ];
@@ -38,42 +125,67 @@ export default function AnalyticsOverview() {
     <section className="space-y-6">
       <div className="clean-card p-6">
         <p className="section-eyebrow">Analytics Dashboard</p>
+
         <h2 className="mt-2 text-3xl font-black text-slate-950 dark:text-white">
-          Overview
+          Real Visitor Analytics
         </h2>
+
         <p className="mt-3 max-w-3xl text-slate-600 dark:text-slate-300">
-          Real analytics are not connected yet. After final portfolio fixes, this section will connect to Firebase
-          Firestore / Google Analytics and show real visitor activity across all users.
+          Firebase Firestore is connected to track real anonymous visitor activity
+          across devices after deployment.
         </p>
 
-        <div className="mt-5 inline-flex rounded-full bg-amber-100 px-4 py-2 text-sm font-black text-amber-700 dark:bg-amber-400/10 dark:text-amber-300">
-          Status: Not connected yet
+        <div className="mt-5 flex flex-wrap gap-3">
+          <span className="inline-flex rounded-full bg-emerald-100 px-4 py-2 text-sm font-black text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300">
+            Status: Connected
+          </span>
+
+          <span className="inline-flex rounded-full bg-slate-100 px-4 py-2 text-sm font-black text-slate-600 dark:bg-slate-900 dark:text-slate-300">
+            Last event: {formatFirebaseDate(summary.lastEventAt)}
+          </span>
         </div>
+
+        {error && (
+          <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700 dark:bg-red-500/10 dark:text-red-300">
+            {error}
+          </p>
+        )}
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {cards.map((card) => {
-          const Icon = card.icon;
+      {loading ? (
+        <div className="clean-card p-8 text-center">
+          <Clock className="mx-auto text-[var(--accent-strong)]" size={34} />
+          <p className="mt-4 font-black text-slate-600 dark:text-slate-300">
+            Loading Firebase analytics...
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {cards.map((card) => {
+            const Icon = card.icon;
 
-          return (
-            <article key={card.title} className="clean-card p-6">
-              <div className="mb-5 grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-[var(--accent-strong)] dark:bg-slate-900">
-                <Icon size={22} />
-              </div>
+            return (
+              <article key={card.title} className="clean-card p-6">
+                <div className="mb-5 grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-[var(--accent-strong)] dark:bg-slate-900">
+                  <Icon size={22} />
+                </div>
 
-              <p className="text-sm font-black uppercase tracking-[0.18em] text-slate-400">
-                {card.title}
-              </p>
-              <h3 className="mt-2 text-2xl font-black text-slate-950 dark:text-white">
-                {card.value}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
-                {card.note}
-              </p>
-            </article>
-          );
-        })}
-      </div>
+                <p className="text-sm font-black uppercase tracking-[0.18em] text-slate-400">
+                  {card.title}
+                </p>
+
+                <h3 className="mt-2 text-2xl font-black text-slate-950 dark:text-white">
+                  {card.value}
+                </h3>
+
+                <p className="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
+                  {card.note}
+                </p>
+              </article>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }
